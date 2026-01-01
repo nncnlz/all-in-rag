@@ -7,7 +7,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_deepseek import ChatDeepSeek
+# from langchain_deepseek import ChatDeepSeek
+from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ loader = UnstructuredMarkdownLoader(markdown_path)
 docs = loader.load()
 
 # 文本分块
-text_splitter = RecursiveCharacterTextSplitter()
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 chunks = text_splitter.split_documents(docs)
 
 # 中文嵌入模型
@@ -46,11 +47,11 @@ prompt = ChatPromptTemplate.from_template("""请根据下面提供的上下文�
                                           )
 
 # 配置大语言模型
-llm = ChatDeepSeek(
-    model="deepseek-chat",
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
     temperature=0.7,
-    max_tokens=4096,
-    api_key=os.getenv("DEEPSEEK_API_KEY")
+    max_tokens=4096
+    # api_key=os.getenv("DEEPSEEK_API_KEY")
 )
 
 # 用户查询
@@ -61,4 +62,4 @@ retrieved_docs = vectorstore.similarity_search(question, k=3)
 docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
 
 answer = llm.invoke(prompt.format(question=question, context=docs_content))
-print(answer)
+print(answer.content)
